@@ -1,0 +1,121 @@
+/* -----------------------------------------
+	Footer CSS
+----------------------------------------- */
+.footer-area {
+  position: relative;
+  z-index: 1;
+}
+.footer-area .navbar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+.footer-area .navbar-brand span {
+  flex: 0 0 auto;
+  width: 100px;
+  height: 2px;
+  background-color: var(--border-color-2);
+}
+.footer-area .info-list li {
+  display: flex;
+  flex-direction: column;
+}
+.footer-area .info-list li:not(:last-child) {
+  margin-bottom: 5px;
+}
+.footer-area .info-list a {
+  display: block;
+}
+.footer-area .info-list a:hover {
+  color: var(--color-primary);
+}
+.footer-area .footer-links a {
+  position: relative;
+  overflow: hidden;
+  display: block;
+  transition: all 0.3s linear;
+}
+.footer-area .copy-right-area {
+  text-align: center;
+}
+.footer-area .border-top {
+  border-color: rgba(var(--color-dark-rgb), 0.2) !important;
+  border-top-style: dashed !important;
+}
+.footer-area .social-link a {
+  color: var(--color-primary);
+  background-color: var(--bg-white);
+  border-radius: var(--radius-sm);
+}
+.footer-area .social-link a:hover {
+  background-color: var(--color-primary);
+  color: var(--text-white);
+}
+.footer-area .newsletter-form {
+  max-width: 350px;
+}
+.footer-area .newsletter-form input {
+  height: 50px;
+  background-color: var(--bg-white);
+  border-color: rgba(var(--color-white-rgb), 0.2);
+}
+.footer-area .newsletter-form .btn {
+  top: 5px;
+  right: 0;
+  left: 0;
+  margin-inline-start: auto;
+  margin-inline-end: 5px;
+  width: -moz-fit-content;
+  width: fit-content;
+  height: calc(100% - 10px);
+  line-height: calc(100% - 10px);
+  position: absolute;
+}
+.footer-area .footer-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+}
+.footer-area .footer-links a {
+  display: block;
+}
+.footer-area .footer-links a:hover {
+  color: var(--color-primary);
+}
+.footer-area .go-top {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: -30px;
+  right: 0;
+  left: 0;
+  width: 55px;
+  height: 60px;
+  cursor: pointer;
+  margin-inline: auto;
+  text-decoration: none;
+  color: var(--text-white);
+  font-size: 22px;
+  background-color: var(--bg-white);
+  -webkit-clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 50% 100%, 0 75%, 0 25%);
+          clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 50% 100%, 0 75%, 0 25%);
+  z-index: 1;
+}
+.footer-area .go-top::before {
+  position: absolute;
+  content: "";
+  top: 2px;
+  left: 2px;
+  right: 0;
+  bottom: 0;
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
+  background-color: var(--color-primary);
+  -webkit-clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 50% 100%, 0 75%, 0 25%);
+          clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 50% 100%, 0 75%, 0 25%);
+  z-index: -1;
+}
