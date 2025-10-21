@@ -1,29 +1,22 @@
 @if (count($availableSlots) > 0)
   <h6 class="text-center pb-20 houre-title">
-    @if (count($availableSlots) > 1)
-      {{ __('Available Time Slots') }}
-    @else
-      {{ __('Available Time Slot') }}
-    @endif
+    {{ __('Select Your Preferred Time Slot') }}
   </h6>
+  
+  <div class="form-group mb-4">
+    <select name="time_slot" id="time_slot_select" class="form-control form-select niceselect" required>
+      <option value="" selected disabled>{{ __('Choose a time slot') }}</option>
+      @foreach ($availableSlots as $time)
+        <option value="{{ $time->id }}" data-start="{{ $time->start_time }}" data-end="{{ $time->end_time }}">
+          {{ date('h:i A', strtotime($time->start_time)) }} - {{ date('h:i A', strtotime($time->end_time)) }}
+        </option>
+      @endforeach
+    </select>
+  </div>
 @else
-  <h6 class="text-center pb-20 houre-title">{{ __('No Time Slot Found') }}</h6>
+  <h6 class="text-center pb-20 houre-title text-danger">{{ __('No Time Slot Available for This Date') }}</h6>
+  <p class="text-center text-muted">{{ __('Please select another date') }}</p>
 @endif
-
-<div class="booking-time-wrapper">
-  @if (count($availableSlots) > 0)
-    @foreach ($availableSlots as $time)
-      <div class="item border radius-sm time" data-id="{{ $time->id }}">
-        <input type="radio" class="selectgroup-input d-none" value="{{ $time->id }}" id="{{ $time->id }}" name="time">
-        <div class="d-flex gap-1 align-items-center">
-          <span class="start_time">{{ $time->start_time }}</span>
-          {{ '-' }}
-          <span class="end_time">{{ $time->end_time }}</span>
-        </div>
-      </div>
-    @endforeach
-  @endif
-</div>
 
 @if (!empty($maxPerson))
   @if ($maxPerson > 1)
