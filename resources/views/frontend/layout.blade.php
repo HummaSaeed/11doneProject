@@ -16,7 +16,7 @@
   <link rel="shortcut icon" href="{{ asset('assets/img/' . $websiteInfo->favicon) }}" type="image/x-icon">
   <link rel="apple-touch-icon" href="{{ asset('assets/img/' . $websiteInfo->favicon) }}">
   <!-- Latest Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Font Awesome is loaded in partials/styles.blade.php -->
 
   <!-- Google font -->
   <link rel="stylesheet" href="{{ asset('assets/frontend/css/font.css') }}">

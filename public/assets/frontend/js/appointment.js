@@ -345,10 +345,22 @@ function initializeGeneralCalendar(serviceId) {
       }
       //convert full date to day
       function convertDayName(dateString) {
-        var date = new Date(dateString);
-        var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        var dayName = dayNames[date.getDay()];
-        return dayName;
+        // Parse as local date to avoid UTC timezone shifts (e.g., showing previous day)
+        // Expected format: YYYY-MM-DD
+        if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+          var parts = dateString.split('-');
+          var year = parseInt(parts[0], 10);
+          var monthIndex = parseInt(parts[1], 10) - 1; // 0-based month
+          var day = parseInt(parts[2], 10);
+          var date = new Date(year, monthIndex, day);
+          var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          var dayName = dayNames[date.getDay()];
+          return dayName;
+        }
+        // Fallback: let Date try to parse
+        var d = new Date(dateString);
+        var fallbackDayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        return fallbackDayNames[d.getDay()];
       }
 
       // Booking Calender
@@ -372,6 +384,25 @@ function initializeGeneralCalendar(serviceId) {
           }
         });
 
+        // Add green highlighting for available dates (days with time slots)
+        setTimeout(function() {
+          $('.pignose-calendar-unit').each(function() {
+            var $this = $(this);
+            var dateStr = $this.data('date');
+            if (dateStr && !$this.hasClass('pignose-calendar-unit-disabled')) {
+              var dayName = convertDayName(dateStr);
+              // Check if this day has available slots
+              if (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].includes(dayName)) {
+                $this.addClass('available-date');
+                $this.css({
+                  'background-color': '#d4edda',
+                  'border': '2px solid #28a745',
+                  'border-radius': '4px'
+                });
+              }
+            }
+          });
+        }, 100);
 
         $('.pignose-calendar-top-next, .pignose-calendar-top-prev').on('click', function () {
           $('#time_next_step, #max_person_id').addClass('d-none');
@@ -400,15 +431,50 @@ function initializeGeneralCalendar(serviceId) {
               serviceId: serviceId,
             },
             success: function (res) {
+              console.log('Date selected:', bookingDate);
+              console.log('Day name:', dayName);
+              console.log('Time slots response:', res);
+              
               if (res) {
                 $(".booking-time-slider").html(res);
                 $('.request-loader-time').removeClass('show');
                 $('.houre-title-1').addClass('d-none');
+                
+                // Check if dropdown was created
+                setTimeout(function() {
+                  var dropdown = $('#time_slot_select');
+                  console.log('Dropdown exists:', dropdown.length > 0);
+                  console.log('Dropdown options:', dropdown.find('option').length);
+                  if (dropdown.length > 0) {
+                    console.log('Dropdown ready for selection');
+                  }
+                }, 100);
+              } else {
+                console.error('Empty response from server');
               }
+            },
+            error: function(xhr, status, error) {
+              console.error('Error loading time slots:', error);
+              console.error('Response:', xhr.responseText);
+              $('.request-loader-time').removeClass('show');
             }
           });
 
-          //service hour selecte
+          //service hour select - using dropdown
+          $('body').on('change', '#time_slot_select', function () {
+            let serviceHourId = $(this).val();
+            
+            console.log('Time slot selected:', serviceHourId);
+            console.log('Showing Next Step button...');
+
+            $('#time_next_step').removeClass('d-none');
+            $('#max_person_id').removeClass('d-none');
+            $('#service_hour_id').val(serviceHourId);
+            
+            console.log('Next Step button visible:', !$('#time_next_step').hasClass('d-none'));
+          });
+
+          //service hour select - using clickable buttons (legacy support)
           $('body').on('click', '.time', function () {
             $('.time').removeClass('time_active');
             $(this).addClass('time_active');
@@ -525,6 +591,15 @@ $('#makeBooking').on('hidden.bs.modal', function (e) {
   });
 });
 
+// Fix modal accessibility issue
+$('#makeBooking').on('shown.bs.modal', function (e) {
+  $(this).attr('aria-hidden', 'false');
+});
+
+$('#makeBooking').on('hidden.bs.modal', function (e) {
+  $(this).attr('aria-hidden', 'true');
+});
+
 /**
  * show or hide stripe gateway input fields,
  * also show or hide offline gateway informations according to checked payment gateway
@@ -580,3 +655,554 @@ $(document).ready(function () {
     $(document).on('DOMSubtreeModified', '.step', handler);
   });
 });
+
+
+
+/*=====================Initialize General Calendar=================*/
+
+function initializeGeneralCalendar(serviceId) {
+
+  $(".request-loader-time").addClass("show");
+
+  
+
+  $.ajax({
+
+    type: 'get',
+
+    url: baseURL + '/services/general-date-time/' + serviceId,
+
+    dataType: 'json',
+
+    success: function (response) {
+
+      $(".request-loader-time").removeClass("show");
+
+      let disabledDates = [];
+
+      let disabledWeekdays = [];
+
+      var vendor_id = response.vendor_id;
+
+      var serviceId = response.serviceId;
+
+      // Use global settings for general availability
+
+      for (var x in response.globalHoliday) {
+
+        let glboalHoliday = response.globalHoliday[x];
+
+        disabledDates.push(glboalHoliday.date);
+
+      }
+
+      for (let x in response.globalWeekend) {
+
+        var value = response.globalWeekend[x];
+
+        disabledWeekdays.push(value.indx);
+
+      }
+
+      if (vendor_id == 0) {
+
+        for (let x in response.adminGlobalWeekend) {
+
+          var value = response.adminGlobalWeekend[x];
+
+          disabledWeekdays.push(value.indx);
+
+        }
+
+      }
+
+      //convert full date to day
+
+      function convertDayName(dateString) {
+
+        var date = new Date(dateString);
+
+        var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+        var dayName = dayNames[date.getDay()];
+
+        return dayName;
+
+      }
+
+
+
+      // Booking Calender
+
+      function onInitBookingCalendar() {
+
+        //weekend days color change
+
+        const weekdays = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
+        var disabledDayNames = [];
+
+        disabledWeekdays.forEach(function (index) {
+
+          disabledDayNames.push('.pignose-calendar-week-' + weekdays[index]);
+
+        });
+
+        disabledDayNames.forEach(function (selector) {
+
+          $(selector).addClass('weekend');
+
+        });
+
+
+
+        //holiday days color change
+
+        disabledDates.forEach(function (date) {
+
+          // Check if any element matches the current date
+
+          var $element = $('.pignose-calendar-unit-disabled[data-date="' + date + '"]');
+
+          if ($element.length > 0) {
+
+            $element.addClass('holiday');
+
+          }
+
+        });
+
+
+
+
+
+        $('.pignose-calendar-top-next, .pignose-calendar-top-prev').on('click', function () {
+
+          $('#time_next_step, #max_person_id').addClass('d-none');
+
+          $('.booking-time-slider').empty();
+
+        });
+
+      }
+
+      //initialize calender with staff holiday & vendor membership expiree date
+
+      $('.booking-calendar').pignoseCalendar({
+
+        init: onInitBookingCalendar,
+
+        initialize: false,
+
+        disabledDates: disabledDates,
+
+        disabledWeekdays: disabledWeekdays.map(Number),
+
+        minDate: moment().format('YYYY-MM-DD'),
+
+        select: function (date) {
+
+          let bookingDate = date[0]["_i"];
+
+          var dayName = convertDayName(bookingDate);
+
+          $(".request-loader-time").addClass("show");
+
+          //show general time slots
+
+          $.ajax({
+
+            method: 'get',
+
+            url: baseURL + '/services/show-general-hour/' + serviceId,
+
+            data: {
+
+              dayName: dayName,
+
+              bookingDate: bookingDate,
+
+              vendor_id: vendor_id,
+
+              serviceId: serviceId,
+
+            },
+
+            success: function (res) {
+
+              console.log('Date selected:', bookingDate);
+              console.log('Day name:', dayName);
+              console.log('Time slots response:', res);
+              
+              if (res) {
+
+                $(".booking-time-slider").html(res);
+
+                $('.request-loader-time').removeClass('show');
+
+                $('.houre-title-1').addClass('d-none');
+
+              } else {
+                console.error('Empty response from server');
+              }
+            },
+            error: function(xhr, status, error) {
+              console.error('Error loading time slots:', error);
+              console.error('Response:', xhr.responseText);
+              $('.request-loader-time').removeClass('show');
+            }
+          });
+
+          //service hour select - using dropdown
+          $('body').on('change', '#time_slot_select', function () {
+            let serviceHourId = $(this).val();
+
+            $('#time_next_step').removeClass('d-none');
+            $('#max_person_id').removeClass('d-none');
+            $('#service_hour_id').val(serviceHourId);
+          });
+
+          //service hour select - using clickable buttons (legacy support)
+          $('body').on('click', '.time', function () {
+
+            $('.time').removeClass('time_active');
+
+            $(this).addClass('time_active');
+
+
+
+            let serviceHourId = $(this).data('id');
+
+
+
+            $('#time_next_step').removeClass('d-none');
+
+            $('#max_person_id').removeClass('d-none');
+
+            $('#service_hour_id').val(serviceHourId);
+
+          });
+
+
+
+          //this data pass on checkout page
+
+          $('body').on('click', '#time_next_step', function () {
+
+            let max_person = $('#max_person').val();
+
+            $('#booking_date').val(bookingDate);
+
+            $('#max_person').val(max_person);
+
+            // Set default staff ID for general booking
+
+            $('#staff_id').val('11done');
+
+          });
+
+
+
+        }
+
+      });
+
+    },
+
+    error: function(error) {
+
+      $(".request-loader-time").removeClass("show");
+
+      console.error('Error loading general calendar:', error);
+
+    }
+
+  });
+
+}
+
+
+
+
+
+/*==========reset service hour value and houre-title after click previous======*/
+
+$('body').on('click', '#time_prev_step', function () {
+
+  $(".booking-time-slider").html('');
+
+  $('.houre-title-1').removeClass('d-none');
+
+  $('#time_next_step').addClass('d-none');
+
+});
+
+
+
+
+
+/*=====================assing data on payment page for booking=================*/
+
+$(document).on('keydown', function (event) {
+
+  if (event.which == 13 && $('#billing-form input:focus').length > 0) {
+
+    event.preventDefault();
+
+    $(".request-loader-time").addClass("show");
+
+    submitForm(event);
+
+  }
+
+});
+
+
+
+function submitForm(event) {
+
+  let url = $("#billing-form").attr('action');
+
+  let method = $("#billing-form").attr('method');
+
+  $.ajax({
+
+    url: url,
+
+    method: method,
+
+    data: $('#billing-form').serialize(),
+
+    success: function (response) {
+
+      $(".request-loader-time").removeClass("show");
+
+      if (response) {
+
+        const fields = ['name', 'phone', 'email', 'address', 'zip_code', 'country'];
+
+        fields.forEach(field => $(`#billing_${field}`).val(response[field]));
+
+
+
+        $('#serviceHourId').val(response.service_hour_id);
+
+        $('#bookingDate').val(response.booking_date);
+
+        $('#staffId').val('11done'); // Set default staff ID
+
+        $('#userId').val(response.user_id);
+
+        $('#bmax_person').val(response.max_person);
+
+        bookingStepper.next();
+
+      }
+
+    },
+
+    error: function (error) {
+
+      $('.em').each(function () {
+
+        $(this).html('');
+
+      });
+
+
+
+      for (let x in error.responseJSON.errors) {
+
+        document.getElementById('err_' + x).innerHTML = error.responseJSON.errors[x][0];
+
+      }
+
+      $(".request-loader-time").removeClass("show");
+
+    }
+
+  });
+
+}
+
+
+
+/*=====================success msg after complete payment=================*/
+
+if (complete == 'payment_complete') {
+
+  var id = bookingInfo.vendor_id;
+
+  $.ajax({
+
+    type: 'get',
+
+    url: baseURL + '/services/payment-success/' + id,
+
+    success: function (response) {
+
+      $('#makeBooking').modal('show');
+
+      $('#bookInfoShow').html(response);
+
+      $('#confirm').addClass('active');
+
+      $('#staff').addClass('d-none');
+
+      $('#time').addClass('d-none');
+
+      $('#info').addClass('d-none');
+
+      $('#payment').addClass('d-none');
+
+      $('.step').addClass('active');
+
+      $('.con_user').val(id);
+
+    }
+
+  });
+
+}
+
+
+
+/*=====================forget session data after close modal=================*/
+
+$('#makeBooking').on('hidden.bs.modal', function (e) {
+
+  $('.request-loader-time').removeClass('show');
+
+  $.ajax({
+
+    type: 'post',
+
+    url: baseURL + '/services/session/forget',
+
+    headers: {
+
+      'X-CSRF-TOKEN': csrfToken
+
+    },
+
+    success: function (response) {
+
+    }
+
+  });
+
+});
+
+
+
+/**
+
+ * show or hide stripe gateway input fields,
+
+ * also show or hide offline gateway informations according to checked payment gateway
+
+ */
+
+$('body').on('change', 'select[name="gateway"]', function () {
+
+  $('#err_currency').html('');
+
+  $('#stripe-errors').html('');
+
+  $('#err_gateway').html('');
+
+  let value = $(this).val();
+
+  let dataType = parseInt(value);
+
+
+
+  // Hide all gateway related elements
+
+  $('#stripe-element, #authorizenet-element, .offline-gateway-info').addClass('d-none');
+
+
+
+  if (isNaN(dataType)) {
+
+    // For online gateways
+
+
+
+    // Show or hide stripe card inputs
+
+    if (value === 'stripe') {
+
+      $('#stripe-element').removeClass('d-none');
+
+    }
+
+
+
+    // Show or hide authorize.net card inputs
+
+    else if (value === 'authorize.net') {
+
+      $('#authorizenet-element').removeClass('d-none');
+
+      $("#authorizenet-element input").removeAttr('disabled');
+
+    }
+
+  } else {
+
+
+
+    // Show particular offline gateway information
+
+    $('#offline-gateway-' + value).removeClass('d-none');
+
+  }
+
+});
+
+
+
+/*=====================guest checkout form=================*/
+
+$('body').on('click', '#guest_checkout', function () {
+
+  $('.auth-info').addClass('d-none');
+
+  $('#billing-form').removeClass('d-none');
+
+  $('#billingBtn').addClass('d-none');
+
+});
+
+
+
+
+
+$(document).ready(function () {
+
+  // Listen for changes in the active class
+
+  $(document).on('DOMSubtreeModified', '.step', function handler() {
+
+    // Unbind the event handler to prevent it from being called again
+
+    $(document).off('DOMSubtreeModified', '.step', handler);
+
+    // $('.step').removeClass('active-prev');
+
+    $('.step.active').each(function () {
+
+      $(this).prevAll('.step').addClass('active-prev');
+
+    });
+
+    // Rebind the event handler for future changes
+
+    $(document).on('DOMSubtreeModified', '.step', handler);
+
+  });
+
+});
+
+

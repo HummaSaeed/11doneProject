@@ -618,7 +618,6 @@ if ($request->filled('location')) {
 
     $currentLang =  Language::where('is_default', 1)->first();
 
-    //admin info
     $information['admin'] = Admin::whereNull('role_id')->firstOrFail();
 
     $information['seoInfo'] = $language->seoInfo()->select('meta_keyword_services', 'meta_description_services')->first();
@@ -1220,18 +1219,27 @@ if ($request->filled('location')) {
   {
     $service = Services::find($serviceId);
     $vendor_id = $service->vendor_id;
+    
+    // Debug logging
+    \Log::info('showGeneralHour called', [
+      'serviceId' => $serviceId,
+      'vendor_id' => $vendor_id,
+      'dayName' => $request->dayName,
+      'bookingDate' => $request->bookingDate
+    ]);
 
     // Get all available global time slots for the selected day
-    $globalTimeSlots = StaffGlobalHour::join('staff_global_days', 'staff_global_days.id', '=', 'staff_global_hours.global_day_id')
+    $globalTimeSlots = StaffGlobalHour::join('admin_global_days', 'admin_global_days.id', '=', 'staff_global_hours.global_day_id')
       ->where('staff_global_hours.vendor_id', $vendor_id)
-      ->where('staff_global_days.day', $request->dayName)
-      ->select('staff_global_days.day', 'staff_global_hours.start_time', 'staff_global_hours.end_time', 'staff_global_hours.id', 'staff_global_hours.max_booking')
+      ->where('admin_global_days.day', $request->dayName)
+      ->select('admin_global_days.day', 'staff_global_hours.start_time', 'staff_global_hours.end_time', 'staff_global_hours.id', 'staff_global_hours.max_booking')
       ->get();
 
     // If no global time slots, try admin global time slots
     if ($globalTimeSlots->isEmpty() && $vendor_id == 0) {
       $globalTimeSlots = StaffGlobalHour::join('admin_global_days', 'admin_global_days.id', '=', 'staff_global_hours.global_day_id')
-        ->where('staff_global_days.day', $request->dayName)
+        ->where('staff_global_hours.vendor_id', 0)
+        ->where('admin_global_days.day', $request->dayName)
         ->select('admin_global_days.day', 'staff_global_hours.start_time', 'staff_global_hours.end_time', 'staff_global_hours.id', 'staff_global_hours.max_booking')
         ->get();
     }
@@ -1248,6 +1256,13 @@ if ($request->filled('location')) {
         $availableSlots[] = $slot;
       }
     }
+
+    // Debug logging
+    \Log::info('showGeneralHour result', [
+      'globalTimeSlots_count' => $globalTimeSlots->count(),
+      'availableSlots_count' => count($availableSlots),
+      'availableSlots' => $availableSlots
+    ]);
 
     return view('frontend.services.booking-modal.time-slots', compact('availableSlots'));
   }

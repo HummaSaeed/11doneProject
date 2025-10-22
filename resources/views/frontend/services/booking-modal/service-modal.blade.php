@@ -166,7 +166,7 @@
             </div>
             <input hidden name="booking_date" id="booking_date">
             <input hidden name="user_id" id="user_id" value="{{ $authUser ? $authUser->id : '' }}">
-            <input hidden name="staff_id" id="staff_id" value="11done">
+            <input hidden name="staff_id" id="staff_id">
             <input hidden name="service_hour_id" id="service_hour_id">
             <input hidden name="max_person" id="max_person">
             <div class="d-flex  justify-content-center">
@@ -193,7 +193,7 @@
       <div id="payment" class="bs-stepper-pane fade" role="tabpanel" aria-labelledby="payment-trigger">
         <div class="payment-area pt-4">
           <div class="section-title title-center mb-40">
-            <h3 class="title col-lg-8">{{ __('') }}</h3>
+            <h3 class="title col-lg-8">{{ __('Payment Method') }}</h3>
           </div>
           <div class="payment-form w-50 w-sm-100 mx-auto">
             <form action="{{ route('frontend.service.payment') }}" method="POST" id="payment-form"
@@ -208,1342 +208,248 @@
               <input hidden type="text" name="country" id="billing_country">
               <input hidden type="text" name="serviceHourId" id="serviceHourId">
               <input hidden type="text" name="bookingDate" id="bookingDate">
-              <input hidden type="text" name="staffId" id="staffId" value="11done">
-              <input hidden type="text" name="user_id" id="userId">
-              <input hidden type="text" name="max_person" id="bmax_person">
-              <div class="form-group">
-                <select name="gateway" id="gateway" class="form-control form-select niceselect">
-                  <!--option selected disabled>{{ __('Choose a Payment Method') }}</option-->
-                  @foreach ($online_gateways as $getway)
-                    <option @selected(old('gateway') == $getway->keyword) value="{{ $getway->keyword }}">
-                      {{ 'Pay with a Credit or Debit Card' }}
-                    </option>
-                  @endforeach
-                  @if (count($offline_gateways) > 0)
-                    @foreach ($offline_gateways as $offlineGateway)
-                      <option @selected(old('gateway') == $offlineGateway->id) value="{{ $offlineGateway->id }}">
-                        {{ __($offlineGateway->name) }}</option>
-                    @endforeach
-                  @endif
-                </select>
-                <span id="err_gateway" class="mt-4 mb-0 text-danger em"></span>
-              </div>
-
-              <!-- Stripe Payment Will be Inserted here -->
-              <div id="stripe-element" class="mb-2 mt-4">
-                <!-- A Stripe Element will be inserted here. -->
-              </div>
-              <!-- Used to display form errors -->
-              <div id="stripe-errors" class="pb-2" role="alert"></div>
-
-              <!-- Authorize.net Payment Will be Inserted here -->
-              <div class="row gateway-details pb-4 d-none" id="authorizenet-element">
-                <div class="col-lg-6">
-                  <div class="form-group mb-3">
-                    <input class="form-control" type="text" id="anetCardNumber" placeholder="Card Number"
-                      disabled />
-                  </div>
-                </div>
-                <div class="col-lg-6 mb-3">
-                  <div class="form-group">
-                    <input class="form-control" type="text" id="anetExpMonth" placeholder="Expire Month"
-                      disabled />
-                  </div>
-                </div>
-                <div class="col-lg-6 ">
-                  <div class="form-group">
-                    <input class="form-control" type="text" id="anetExpYear" placeholder="Expire Year"
-                      disabled />
-                  </div>
-                </div>
-                <div class="col-lg-6 ">
-                  <div class="form-group">
-                    <input class="form-control" type="text" id="anetCardCode" placeholder="Card Code" disabled />
-                  </div>
-                </div>
-                <input type="hidden" name="opaqueDataValue" id="opaqueDataValue" disabled />
-                <input type="hidden" name="opaqueDataDescriptor" id="opaqueDataDescriptor" disabled />
-                @php
-                  $display = 'none';
-                @endphp
-                <ul id="authorizeNetErrors" style="display: {{ $display }}"></ul>
-              </div>
-              @foreach ($offline_gateways as $offlineGateway)
-                <div class="@if ($errors->has('attachment') && request()->session()->get('gatewayId') == $offlineGateway->id) d-block @else d-none @endif offline-gateway-info"
-                  id="{{ 'offline-gateway-' . $offlineGateway->id }}">
-                  @if (!is_null($offlineGateway->short_description))
-                    <div class="form-group mb-4">
-                      <label class="font-weight-bold text-dark">{{ __('Description') }}</label>
-
-
-                      <p>{{ $offlineGateway->short_description }}</p>
-                    </div>
-                  @endif
-
-                  @if (!is_null($offlineGateway->instructions))
-                    <div class="form-group mb-4">
-                      <label class="font-weight-bold text-dark">{{ __('Instructions') }}</label>
-                      {!! replaceBaseUrl($offlineGateway->instructions, 'summernote') !!}
-                    </div>
-                  @endif
-
-                  @if ($offlineGateway->has_attachment == 1)
-                    <div class="form-group mb-4">
-                      <label>{{ __('Attachment') . '*' }}</label>
-                      <br>
-                      <input type="file" class="form-control" name="attachment" id="offline-attachment">
-                      <span id="err_attachment" class="mt-2 mb-0 text-danger em"></span>
-                    </div>
-                  @endif
-
-                </div>
-                <span id="err_currency" class="mt-2 mb-0 text-danger em"></span>
-              @endforeach
-              <div class="mt-2">
-                <button id="featuredBtn"
-                  class="btn btn-lg btn-primary btn-gradient w-100">{{ __('Make Payment') }}</button>
-              </div>
-            </form>
-          </div>
-          <div class="btn-groups justify-content-center w-100 mt-20">
-            <a href="javaScript:void(0)" id="payment_prev" class="btn-text color-primary icon-start"
-              onclick="bookingStepper.previous()" target="_self"><i
-                class="fal fa-long-arrow-left"></i>{{ __('Prev Step') }}</a>
-          </div>
-        </div>
-      </div>
-
-      <div id="confirm" class="bs-stepper-pane fade" role="tabpanel" aria-labelledby="confirm-trigger">
-        <div class="confirm-area pt-4">
-          <div class="image text-center mb-30">
-            <img class="lazyload" src="{{ asset('assets/frontend/images/placeholder.png') }}"
-              data-src="{{ asset('assets/frontend/images/book-success.png') }}" alt="Image">
-          </div>
-          <div class="section-title title-center mb-30">
-            <h4 class="title col-lg-8">
-              {{ __('Congratulations') . '!' }}<br>
-              @if (isset($bookingInfo))
-                @if ($bookingInfo->gateway_type == 'offline')
-                  {{ __('Wait for the payment confirmation mail') }}<br>
-                @else
-                  {{ __('You have booked this service successfully') }}
-                @endif
-              @endif
-            </h4>
-          </div>
-          <div>
-            @if (isset($bookingInfo))
-              <div class="card">
-                <div class="card-header">
-                  <div class="d-flex justify-content-center align-items-center">
-                    <h5 class="p-0">
-                      {{ __('Booking No.') . ' ' . '#' . $bookingInfo->order_number }}</h5>
-                  </div>
-                </div>
-                <div class="card-body">
-                  <div class="payment-information">
-                    <div class="row mb-2">
-                      <div class="col-lg-6">
-                        <strong>{{ __('Service Title') . ' :' }}</strong>
-                      </div>
-
-                      <div class="col-lg-6">
-                        @if ($bookingInfo->serviceContent->isNotEmpty())
-                          @foreach ($bookingInfo->serviceContent as $content)
-                            <a href="{{ route('frontend.service.details', ['slug' => $content->slug, 'id' => $bookingInfo->service->id]) }}"
-                              class="btn-text color-primary" target="_blank">
-                              {{ truncateString($content->name, 50) }}
-                            </a>
-                          @endforeach
-                        @endif
-                      </div>
-                    </div>
-                    <div class="row mb-2">
-                      <div class="col-lg-6">
-                        <strong>{{ __('Booking Date') . ' :' }}</strong>
-                      </div>
-
-                      <div class="col-lg-6">
-                        {{ date_format($bookingInfo->created_at, 'M d, Y') }}
-                      </div>
-                    </div>
-                    <div class="row mb-2">
-                      <div class="col-lg-6">
-                        <strong>{{ __('Appointment Date') . ' :' }}</strong>
-                      </div>
-
-                      <div class="col-lg-6">
-                        {{ \Carbon\Carbon::parse($bookingInfo->booking_date)->format('M d, Y') }}
-                      </div>
-                    </div>
-
-                    <div class="row mb-2">
-                      <div class="col-lg-6">
-                        <strong>{{ __('Appointment Time') . ' :' }}</strong>
-                      </div>
-
-                      <div class="col-lg-6">
-                        {{ $bookingInfo->start_date }} -
-                        {{ $bookingInfo->end_date }}
-                      </div>
-                    </div>
-
-                    <div class="row mb-2">
-                      <div class="col-lg-6">
-                        <strong>{{ __('Vendor') . ' :' }}</strong>
-                      </div>
-
-                      <div class="col-lg-6">
-                        @if ($bookingInfo->vendor_id != 0)
-                          <a
-                            href="{{ route('frontend.vendor.details', $bookingInfo->vendor->username) }}">{{ $bookingInfo->vendor->username }}</a>
-                        @else
-                          <a
-                            href="{{ route('frontend.vendor.details', $admin->username) }}">{{ $admin->username }}</a>
-                        @endif
-                      </div>
-                    </div>
-
-                    <div class="row mb-2">
-                      <div class="col-lg-6">
-                        <strong>{{ __('Paid Amount') . ' :' }}</strong>
-                      </div>
-
-                      <div class="col-lg-6">
-                        {{ $bookingInfo->currency_text_position == 'left' ? $bookingInfo->currency_text . ' ' : '' }}{{ number_format($bookingInfo->customer_paid, 2, '.', ',') }}{{ $bookingInfo->currency_text_position == 'right' ? ' ' . $bookingInfo->currency_text : '' }}
-                      </div>
-                    </div>
-
-                    <div class="row mb-2">
-                      <div class="col-lg-6">
-                        <strong>{{ __('Paid Via') . ' :' }}</strong>
-                      </div>
-
-                      <div class="col-lg-6">
-                        {{ $bookingInfo->payment_method }}
-                      </div>
-                    </div>
-
-                    <div class="row mb-2">
-                      <div class="col-lg-6">
-                        <strong>{{ __('Payment Status') . ' :' }}</strong>
-                      </div>
-
-                      <div class="col-lg-6">
-                        @if ($bookingInfo->payment_status == 'completed')
-                          <span class="badge bg-success">{{ __('completed') }}</span>
-                        @elseif ($bookingInfo->payment_status == 'pending')
-                          <span class="badge bg-warning">{{ __('pending') }}</span>
-                        @else
-                          <span class="badge bg-danger">{{ __('rejected') }}</span>
-                        @endif
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            @endif
-          </div>
-          <div class="btn-groups justify-content-center w-100 mt-20">
-            <button href="javaScript:void(0)" class="btn btn-lg btn-primary btn-gradient"" target="_self"
-              data-bs-dismiss="modal" aria-label="Close">{{ __('Close') }}</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-                  target="_self">{{ __('Next Step') }}
-
-                  <i class="fal fa-long-arrow-right"></i></a>
-
-              </div>
-
-            </div>
-
-          </form>
-
-        </div>
-
-        <!-- Authentication-area end -->
-
-      </div>
-
-
-
-      <div id="payment" class="bs-stepper-pane fade" role="tabpanel" aria-labelledby="payment-trigger">
-
-        <div class="payment-area pt-4">
-
-          <div class="section-title title-center mb-40">
-
-            <h3 class="title col-lg-8">{{ __('') }}</h3>
-
-          </div>
-
-          <div class="payment-form w-50 w-sm-100 mx-auto">
-
-            <form action="{{ route('frontend.service.payment') }}" method="POST" id="payment-form"
-
-              enctype="multipart/form-data">
-
-              @csrf
-
-              <input hidden type="text" name="stripeToken" id="stripeToken">
-
-              <input hidden type="text" name="name" id="billing_name">
-
-              <input hidden type="text" name="phone" id="billing_phone">
-
-              <input hidden type="text" name="email" id="billing_email">
-
-              <input hidden type="text" name="address" id="billing_address">
-
-              <input hidden type="text" name="zip_code" id="billing_zip_code">
-
-              <input hidden type="text" name="country" id="billing_country">
-
-              <input hidden type="text" name="serviceHourId" id="serviceHourId">
-
-              <input hidden type="text" name="bookingDate" id="bookingDate">
-
               <input hidden type="text" name="staffId" id="staffId">
-
               <input hidden type="text" name="user_id" id="userId">
-
               <input hidden type="text" name="max_person" id="bmax_person">
-
               <div class="form-group">
-
                 <select name="gateway" id="gateway" class="form-control form-select niceselect">
-
                   <!--option selected disabled>{{ __('Choose a Payment Method') }}</option-->
-
                   @foreach ($online_gateways as $getway)
-
                     <option @selected(old('gateway') == $getway->keyword) value="{{ $getway->keyword }}">
-
                       {{ 'Pay with a Credit or Debit Card' }}
-
                     </option>
-
                   @endforeach
-
                   @if (count($offline_gateways) > 0)
-
                     @foreach ($offline_gateways as $offlineGateway)
-
                       <option @selected(old('gateway') == $offlineGateway->id) value="{{ $offlineGateway->id }}">
-
                         {{ __($offlineGateway->name) }}</option>
-
                     @endforeach
-
                   @endif
-
                 </select>
-
                 <span id="err_gateway" class="mt-4 mb-0 text-danger em"></span>
-
               </div>
-
-
 
               <!-- Stripe Payment Will be Inserted here -->
-
               <div id="stripe-element" class="mb-2 mt-4">
-
                 <!-- A Stripe Element will be inserted here. -->
-
               </div>
-
               <!-- Used to display form errors -->
-
               <div id="stripe-errors" class="pb-2" role="alert"></div>
 
-
-
               <!-- Authorize.net Payment Will be Inserted here -->
-
               <div class="row gateway-details pb-4 d-none" id="authorizenet-element">
-
                 <div class="col-lg-6">
-
                   <div class="form-group mb-3">
-
                     <input class="form-control" type="text" id="anetCardNumber" placeholder="Card Number"
-
                       disabled />
-
                   </div>
-
                 </div>
-
                 <div class="col-lg-6 mb-3">
-
                   <div class="form-group">
-
                     <input class="form-control" type="text" id="anetExpMonth" placeholder="Expire Month"
-
                       disabled />
-
                   </div>
-
                 </div>
-
                 <div class="col-lg-6 ">
-
                   <div class="form-group">
-
                     <input class="form-control" type="text" id="anetExpYear" placeholder="Expire Year"
-
                       disabled />
-
                   </div>
-
                 </div>
-
                 <div class="col-lg-6 ">
-
                   <div class="form-group">
-
                     <input class="form-control" type="text" id="anetCardCode" placeholder="Card Code" disabled />
-
                   </div>
-
                 </div>
-
                 <input type="hidden" name="opaqueDataValue" id="opaqueDataValue" disabled />
-
                 <input type="hidden" name="opaqueDataDescriptor" id="opaqueDataDescriptor" disabled />
-
                 @php
-
                   $display = 'none';
-
                 @endphp
-
                 <ul id="authorizeNetErrors" style="display: {{ $display }}"></ul>
-
               </div>
-
               @foreach ($offline_gateways as $offlineGateway)
-
                 <div class="@if ($errors->has('attachment') && request()->session()->get('gatewayId') == $offlineGateway->id) d-block @else d-none @endif offline-gateway-info"
-
                   id="{{ 'offline-gateway-' . $offlineGateway->id }}">
-
                   @if (!is_null($offlineGateway->short_description))
-
                     <div class="form-group mb-4">
-
                       <label class="font-weight-bold text-dark">{{ __('Description') }}</label>
 
 
-
-
-
                       <p>{{ $offlineGateway->short_description }}</p>
-
                     </div>
-
                   @endif
-
-
 
                   @if (!is_null($offlineGateway->instructions))
-
                     <div class="form-group mb-4">
-
                       <label class="font-weight-bold text-dark">{{ __('Instructions') }}</label>
-
                       {!! replaceBaseUrl($offlineGateway->instructions, 'summernote') !!}
-
                     </div>
-
                   @endif
-
-
 
                   @if ($offlineGateway->has_attachment == 1)
-
                     <div class="form-group mb-4">
-
                       <label>{{ __('Attachment') . '*' }}</label>
-
                       <br>
-
                       <input type="file" class="form-control" name="attachment" id="offline-attachment">
-
                       <span id="err_attachment" class="mt-2 mb-0 text-danger em"></span>
-
                     </div>
-
                   @endif
 
-
-
                 </div>
-
                 <span id="err_currency" class="mt-2 mb-0 text-danger em"></span>
-
               @endforeach
-
               <div class="mt-2">
-
                 <button id="featuredBtn"
-
                   class="btn btn-lg btn-primary btn-gradient w-100">{{ __('Make Payment') }}</button>
-
               </div>
-
             </form>
-
           </div>
-
           <div class="btn-groups justify-content-center w-100 mt-20">
-
             <a href="javaScript:void(0)" id="payment_prev" class="btn-text color-primary icon-start"
-
               onclick="bookingStepper.previous()" target="_self"><i
-
                 class="fal fa-long-arrow-left"></i>{{ __('Prev Step') }}</a>
-
           </div>
-
         </div>
-
       </div>
-
-
 
       <div id="confirm" class="bs-stepper-pane fade" role="tabpanel" aria-labelledby="confirm-trigger">
-
         <div class="confirm-area pt-4">
-
           <div class="image text-center mb-30">
-
             <img class="lazyload" src="{{ asset('assets/frontend/images/placeholder.png') }}"
-
               data-src="{{ asset('assets/frontend/images/book-success.png') }}" alt="Image">
-
           </div>
-
           <div class="section-title title-center mb-30">
-
             <h4 class="title col-lg-8">
-
               {{ __('Congratulations') . '!' }}<br>
-
               @if (isset($bookingInfo))
-
                 @if ($bookingInfo->gateway_type == 'offline')
-
                   {{ __('Wait for the payment confirmation mail') }}<br>
-
                 @else
-
                   {{ __('You have booked this service successfully') }}
-
                 @endif
-
               @endif
-
             </h4>
-
           </div>
-
           <div>
-
             @if (isset($bookingInfo))
-
               <div class="card">
-
                 <div class="card-header">
-
                   <div class="d-flex justify-content-center align-items-center">
-
                     <h5 class="p-0">
-
                       {{ __('Booking No.') . ' ' . '#' . $bookingInfo->order_number }}</h5>
-
                   </div>
-
                 </div>
-
                 <div class="card-body">
-
                   <div class="payment-information">
-
                     <div class="row mb-2">
-
                       <div class="col-lg-6">
-
                         <strong>{{ __('Service Title') . ' :' }}</strong>
-
                       </div>
 
-
-
                       <div class="col-lg-6">
-
                         @if ($bookingInfo->serviceContent->isNotEmpty())
-
                           @foreach ($bookingInfo->serviceContent as $content)
-
                             <a href="{{ route('frontend.service.details', ['slug' => $content->slug, 'id' => $bookingInfo->service->id]) }}"
-
                               class="btn-text color-primary" target="_blank">
-
                               {{ truncateString($content->name, 50) }}
-
                             </a>
-
                           @endforeach
-
                         @endif
-
                       </div>
-
                     </div>
-
                     <div class="row mb-2">
-
                       <div class="col-lg-6">
-
                         <strong>{{ __('Booking Date') . ' :' }}</strong>
-
                       </div>
 
-
-
                       <div class="col-lg-6">
-
                         {{ date_format($bookingInfo->created_at, 'M d, Y') }}
-
                       </div>
-
                     </div>
-
                     <div class="row mb-2">
-
                       <div class="col-lg-6">
-
                         <strong>{{ __('Appointment Date') . ' :' }}</strong>
-
                       </div>
 
-
-
                       <div class="col-lg-6">
-
                         {{ \Carbon\Carbon::parse($bookingInfo->booking_date)->format('M d, Y') }}
-
                       </div>
-
                     </div>
 
-
-
                     <div class="row mb-2">
-
                       <div class="col-lg-6">
-
                         <strong>{{ __('Appointment Time') . ' :' }}</strong>
-
                       </div>
 
-
-
                       <div class="col-lg-6">
-
                         {{ $bookingInfo->start_date }} -
-
                         {{ $bookingInfo->end_date }}
-
                       </div>
-
                     </div>
 
-
-
                     <div class="row mb-2">
-
                       <div class="col-lg-6">
-
                         <strong>{{ __('Vendor') . ' :' }}</strong>
-
                       </div>
 
-
-
                       <div class="col-lg-6">
-
                         @if ($bookingInfo->vendor_id != 0)
-
                           <a
-
                             href="{{ route('frontend.vendor.details', $bookingInfo->vendor->username) }}">{{ $bookingInfo->vendor->username }}</a>
-
                         @else
-
                           <a
-
                             href="{{ route('frontend.vendor.details', $admin->username) }}">{{ $admin->username }}</a>
-
                         @endif
-
                       </div>
-
                     </div>
 
-
-
                     <div class="row mb-2">
-
                       <div class="col-lg-6">
-
                         <strong>{{ __('Paid Amount') . ' :' }}</strong>
-
                       </div>
 
-
-
                       <div class="col-lg-6">
-
                         {{ $bookingInfo->currency_text_position == 'left' ? $bookingInfo->currency_text . ' ' : '' }}{{ number_format($bookingInfo->customer_paid, 2, '.', ',') }}{{ $bookingInfo->currency_text_position == 'right' ? ' ' . $bookingInfo->currency_text : '' }}
-
                       </div>
-
                     </div>
 
-
-
                     <div class="row mb-2">
-
                       <div class="col-lg-6">
-
                         <strong>{{ __('Paid Via') . ' :' }}</strong>
-
                       </div>
 
-
-
                       <div class="col-lg-6">
-
                         {{ $bookingInfo->payment_method }}
-
                       </div>
-
                     </div>
 
-
-
                     <div class="row mb-2">
-
                       <div class="col-lg-6">
-
                         <strong>{{ __('Payment Status') . ' :' }}</strong>
-
                       </div>
 
-
-
                       <div class="col-lg-6">
-
                         @if ($bookingInfo->payment_status == 'completed')
-
                           <span class="badge bg-success">{{ __('completed') }}</span>
-
                         @elseif ($bookingInfo->payment_status == 'pending')
-
                           <span class="badge bg-warning">{{ __('pending') }}</span>
-
                         @else
-
                           <span class="badge bg-danger">{{ __('rejected') }}</span>
-
                         @endif
-
                       </div>
-
                     </div>
-
                   </div>
-
                 </div>
-
               </div>
-
             @endif
-
           </div>
-
           <div class="btn-groups justify-content-center w-100 mt-20">
-
-            <button href="javaScript:void(0)" class="btn btn-lg btn-primary btn-gradient"" target="_self"
-
+            <button href="javaScript:void(0)" class="btn btn-lg btn-primary btn-gradient" target="_self"
               data-bs-dismiss="modal" aria-label="Close">{{ __('Close') }}</button>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
-
   </div>
-
 </div>
-
-
-
-
-                  target="_self">{{ __('Next Step') }}
-
-                  <i class="fal fa-long-arrow-right"></i></a>
-
-              </div>
-
-            </div>
-
-          </form>
-
-        </div>
-
-        <!-- Authentication-area end -->
-
-      </div>
-
-
-
-      <div id="payment" class="bs-stepper-pane fade" role="tabpanel" aria-labelledby="payment-trigger">
-
-        <div class="payment-area pt-4">
-
-          <div class="section-title title-center mb-40">
-
-            <h3 class="title col-lg-8">{{ __('') }}</h3>
-
-          </div>
-
-          <div class="payment-form w-50 w-sm-100 mx-auto">
-
-            <form action="{{ route('frontend.service.payment') }}" method="POST" id="payment-form"
-
-              enctype="multipart/form-data">
-
-              @csrf
-
-              <input hidden type="text" name="stripeToken" id="stripeToken">
-
-              <input hidden type="text" name="name" id="billing_name">
-
-              <input hidden type="text" name="phone" id="billing_phone">
-
-              <input hidden type="text" name="email" id="billing_email">
-
-              <input hidden type="text" name="address" id="billing_address">
-
-              <input hidden type="text" name="zip_code" id="billing_zip_code">
-
-              <input hidden type="text" name="country" id="billing_country">
-
-              <input hidden type="text" name="serviceHourId" id="serviceHourId">
-
-              <input hidden type="text" name="bookingDate" id="bookingDate">
-
-              <input hidden type="text" name="staffId" id="staffId">
-
-              <input hidden type="text" name="user_id" id="userId">
-
-              <input hidden type="text" name="max_person" id="bmax_person">
-
-              <div class="form-group">
-
-                <select name="gateway" id="gateway" class="form-control form-select niceselect">
-
-                  <!--option selected disabled>{{ __('Choose a Payment Method') }}</option-->
-
-                  @foreach ($online_gateways as $getway)
-
-                    <option @selected(old('gateway') == $getway->keyword) value="{{ $getway->keyword }}">
-
-                      {{ 'Pay with a Credit or Debit Card' }}
-
-                    </option>
-
-                  @endforeach
-
-                  @if (count($offline_gateways) > 0)
-
-                    @foreach ($offline_gateways as $offlineGateway)
-
-                      <option @selected(old('gateway') == $offlineGateway->id) value="{{ $offlineGateway->id }}">
-
-                        {{ __($offlineGateway->name) }}</option>
-
-                    @endforeach
-
-                  @endif
-
-                </select>
-
-                <span id="err_gateway" class="mt-4 mb-0 text-danger em"></span>
-
-              </div>
-
-
-
-              <!-- Stripe Payment Will be Inserted here -->
-
-              <div id="stripe-element" class="mb-2 mt-4">
-
-                <!-- A Stripe Element will be inserted here. -->
-
-              </div>
-
-              <!-- Used to display form errors -->
-
-              <div id="stripe-errors" class="pb-2" role="alert"></div>
-
-
-
-              <!-- Authorize.net Payment Will be Inserted here -->
-
-              <div class="row gateway-details pb-4 d-none" id="authorizenet-element">
-
-                <div class="col-lg-6">
-
-                  <div class="form-group mb-3">
-
-                    <input class="form-control" type="text" id="anetCardNumber" placeholder="Card Number"
-
-                      disabled />
-
-                  </div>
-
-                </div>
-
-                <div class="col-lg-6 mb-3">
-
-                  <div class="form-group">
-
-                    <input class="form-control" type="text" id="anetExpMonth" placeholder="Expire Month"
-
-                      disabled />
-
-                  </div>
-
-                </div>
-
-                <div class="col-lg-6 ">
-
-                  <div class="form-group">
-
-                    <input class="form-control" type="text" id="anetExpYear" placeholder="Expire Year"
-
-                      disabled />
-
-                  </div>
-
-                </div>
-
-                <div class="col-lg-6 ">
-
-                  <div class="form-group">
-
-                    <input class="form-control" type="text" id="anetCardCode" placeholder="Card Code" disabled />
-
-                  </div>
-
-                </div>
-
-                <input type="hidden" name="opaqueDataValue" id="opaqueDataValue" disabled />
-
-                <input type="hidden" name="opaqueDataDescriptor" id="opaqueDataDescriptor" disabled />
-
-                @php
-
-                  $display = 'none';
-
-                @endphp
-
-                <ul id="authorizeNetErrors" style="display: {{ $display }}"></ul>
-
-              </div>
-
-              @foreach ($offline_gateways as $offlineGateway)
-
-                <div class="@if ($errors->has('attachment') && request()->session()->get('gatewayId') == $offlineGateway->id) d-block @else d-none @endif offline-gateway-info"
-
-                  id="{{ 'offline-gateway-' . $offlineGateway->id }}">
-
-                  @if (!is_null($offlineGateway->short_description))
-
-                    <div class="form-group mb-4">
-
-                      <label class="font-weight-bold text-dark">{{ __('Description') }}</label>
-
-
-
-
-
-                      <p>{{ $offlineGateway->short_description }}</p>
-
-                    </div>
-
-                  @endif
-
-
-
-                  @if (!is_null($offlineGateway->instructions))
-
-                    <div class="form-group mb-4">
-
-                      <label class="font-weight-bold text-dark">{{ __('Instructions') }}</label>
-
-                      {!! replaceBaseUrl($offlineGateway->instructions, 'summernote') !!}
-
-                    </div>
-
-                  @endif
-
-
-
-                  @if ($offlineGateway->has_attachment == 1)
-
-                    <div class="form-group mb-4">
-
-                      <label>{{ __('Attachment') . '*' }}</label>
-
-                      <br>
-
-                      <input type="file" class="form-control" name="attachment" id="offline-attachment">
-
-                      <span id="err_attachment" class="mt-2 mb-0 text-danger em"></span>
-
-                    </div>
-
-                  @endif
-
-
-
-                </div>
-
-                <span id="err_currency" class="mt-2 mb-0 text-danger em"></span>
-
-              @endforeach
-
-              <div class="mt-2">
-
-                <button id="featuredBtn"
-
-                  class="btn btn-lg btn-primary btn-gradient w-100">{{ __('Make Payment') }}</button>
-
-              </div>
-
-            </form>
-
-          </div>
-
-          <div class="btn-groups justify-content-center w-100 mt-20">
-
-            <a href="javaScript:void(0)" id="payment_prev" class="btn-text color-primary icon-start"
-
-              onclick="bookingStepper.previous()" target="_self"><i
-
-                class="fal fa-long-arrow-left"></i>{{ __('Prev Step') }}</a>
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-
-      <div id="confirm" class="bs-stepper-pane fade" role="tabpanel" aria-labelledby="confirm-trigger">
-
-        <div class="confirm-area pt-4">
-
-          <div class="image text-center mb-30">
-
-            <img class="lazyload" src="{{ asset('assets/frontend/images/placeholder.png') }}"
-
-              data-src="{{ asset('assets/frontend/images/book-success.png') }}" alt="Image">
-
-          </div>
-
-          <div class="section-title title-center mb-30">
-
-            <h4 class="title col-lg-8">
-
-              {{ __('Congratulations') . '!' }}<br>
-
-              @if (isset($bookingInfo))
-
-                @if ($bookingInfo->gateway_type == 'offline')
-
-                  {{ __('Wait for the payment confirmation mail') }}<br>
-
-                @else
-
-                  {{ __('You have booked this service successfully') }}
-
-                @endif
-
-              @endif
-
-            </h4>
-
-          </div>
-
-          <div>
-
-            @if (isset($bookingInfo))
-
-              <div class="card">
-
-                <div class="card-header">
-
-                  <div class="d-flex justify-content-center align-items-center">
-
-                    <h5 class="p-0">
-
-                      {{ __('Booking No.') . ' ' . '#' . $bookingInfo->order_number }}</h5>
-
-                  </div>
-
-                </div>
-
-                <div class="card-body">
-
-                  <div class="payment-information">
-
-                    <div class="row mb-2">
-
-                      <div class="col-lg-6">
-
-                        <strong>{{ __('Service Title') . ' :' }}</strong>
-
-                      </div>
-
-
-
-                      <div class="col-lg-6">
-
-                        @if ($bookingInfo->serviceContent->isNotEmpty())
-
-                          @foreach ($bookingInfo->serviceContent as $content)
-
-                            <a href="{{ route('frontend.service.details', ['slug' => $content->slug, 'id' => $bookingInfo->service->id]) }}"
-
-                              class="btn-text color-primary" target="_blank">
-
-                              {{ truncateString($content->name, 50) }}
-
-                            </a>
-
-                          @endforeach
-
-                        @endif
-
-                      </div>
-
-                    </div>
-
-                    <div class="row mb-2">
-
-                      <div class="col-lg-6">
-
-                        <strong>{{ __('Booking Date') . ' :' }}</strong>
-
-                      </div>
-
-
-
-                      <div class="col-lg-6">
-
-                        {{ date_format($bookingInfo->created_at, 'M d, Y') }}
-
-                      </div>
-
-                    </div>
-
-                    <div class="row mb-2">
-
-                      <div class="col-lg-6">
-
-                        <strong>{{ __('Appointment Date') . ' :' }}</strong>
-
-                      </div>
-
-
-
-                      <div class="col-lg-6">
-
-                        {{ \Carbon\Carbon::parse($bookingInfo->booking_date)->format('M d, Y') }}
-
-                      </div>
-
-                    </div>
-
-
-
-                    <div class="row mb-2">
-
-                      <div class="col-lg-6">
-
-                        <strong>{{ __('Appointment Time') . ' :' }}</strong>
-
-                      </div>
-
-
-
-                      <div class="col-lg-6">
-
-                        {{ $bookingInfo->start_date }} -
-
-                        {{ $bookingInfo->end_date }}
-
-                      </div>
-
-                    </div>
-
-
-
-                    <div class="row mb-2">
-
-                      <div class="col-lg-6">
-
-                        <strong>{{ __('Vendor') . ' :' }}</strong>
-
-                      </div>
-
-
-
-                      <div class="col-lg-6">
-
-                        @if ($bookingInfo->vendor_id != 0)
-
-                          <a
-
-                            href="{{ route('frontend.vendor.details', $bookingInfo->vendor->username) }}">{{ $bookingInfo->vendor->username }}</a>
-
-                        @else
-
-                          <a
-
-                            href="{{ route('frontend.vendor.details', $admin->username) }}">{{ $admin->username }}</a>
-
-                        @endif
-
-                      </div>
-
-                    </div>
-
-
-
-                    <div class="row mb-2">
-
-                      <div class="col-lg-6">
-
-                        <strong>{{ __('Paid Amount') . ' :' }}</strong>
-
-                      </div>
-
-
-
-                      <div class="col-lg-6">
-
-                        {{ $bookingInfo->currency_text_position == 'left' ? $bookingInfo->currency_text . ' ' : '' }}{{ number_format($bookingInfo->customer_paid, 2, '.', ',') }}{{ $bookingInfo->currency_text_position == 'right' ? ' ' . $bookingInfo->currency_text : '' }}
-
-                      </div>
-
-                    </div>
-
-
-
-                    <div class="row mb-2">
-
-                      <div class="col-lg-6">
-
-                        <strong>{{ __('Paid Via') . ' :' }}</strong>
-
-                      </div>
-
-
-
-                      <div class="col-lg-6">
-
-                        {{ $bookingInfo->payment_method }}
-
-                      </div>
-
-                    </div>
-
-
-
-                    <div class="row mb-2">
-
-                      <div class="col-lg-6">
-
-                        <strong>{{ __('Payment Status') . ' :' }}</strong>
-
-                      </div>
-
-
-
-                      <div class="col-lg-6">
-
-                        @if ($bookingInfo->payment_status == 'completed')
-
-                          <span class="badge bg-success">{{ __('completed') }}</span>
-
-                        @elseif ($bookingInfo->payment_status == 'pending')
-
-                          <span class="badge bg-warning">{{ __('pending') }}</span>
-
-                        @else
-
-                          <span class="badge bg-danger">{{ __('rejected') }}</span>
-
-                        @endif
-
-                      </div>
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-            @endif
-
-          </div>
-
-          <div class="btn-groups justify-content-center w-100 mt-20">
-
-            <button href="javaScript:void(0)" class="btn btn-lg btn-primary btn-gradient"" target="_self"
-
-              data-bs-dismiss="modal" aria-label="Close">{{ __('Close') }}</button>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-
-
