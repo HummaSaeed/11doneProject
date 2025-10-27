@@ -24,9 +24,16 @@
         <span class="bs-stepper-label">{{ __('Payment') }}</span>
       </button>
     </div>
-    <div class="step" data-target="#confirm">
+    <!-- <div class="step" data-target="#summary">
       <button type="button" class="step-trigger" role="tab" aria-controls="confirm" id="confirm-trigger">
         <span class="h3 mb-1">04</span>
+        <span class="bs-stepper-circle"><i class="fal fa-check-circle"></i></span>
+        <span class="bs-stepper-label">{{ __('Summary') }}</span>
+      </button>
+    </div> -->
+    <div class="step" data-target="#confirm">
+      <button type="button" class="step-trigger" role="tab" aria-controls="confirm" id="confirm-trigger">
+        <span class="h3 mb-1">05</span>
         <span class="bs-stepper-circle"><i class="fal fa-check-circle"></i></span>
         <span class="bs-stepper-label">{{ __('Confirmation') }}</span>
       </button>
@@ -36,11 +43,11 @@
     <div class="container">
       <div id="time" class="bs-stepper-pane fade" role="tabpanel" aria-labelledby="time-trigger">
         <div class="calender-area pt-4">
-          <div class="section-title title-center mb-40">
+          <div class="section-title title-center ">
             <h3 class="title">{{ __('Select Available Date & Time') }}</h3>
             <p class="text-muted">{{ __('Choose from available time slots for this service') }}</p>
           </div>
-          <div class="booking-calendar mb-30"></div>
+          <div class="booking-calendar mb-10"></div>
           <div class="booking-time">
             <h6 class="text-center pb-20 houre-title-1">
               {{ __('Please Select a Date for Available Schedule') }}</h6>
@@ -49,7 +56,7 @@
             </div>
           </div>
 
-          <div class="btn-groups justify-content-center w-100 mt-20">
+          <div class="btn-groups justify-content-center w-100 ">
             <a id="time_next_step" href="javaScript:void(0)" class="d-none btn-text color-primary icon-start"
               onclick="bookingStepper.next()" target="_self">{{ __('Next Step') }}<i
                 class="fal fa-long-arrow-right"></i></a>
@@ -62,12 +69,12 @@
         <div class="authentication-area pt-1">
           <div class="row auth-info {{ !Auth::guard('web')->user() ? 'd-block' : 'd-none' }}">
             <div class="col-lg-12">
-              <div class="auth-form mt-3">
+              <div class="auth-form">
                 <form id="login-form">
-                  <div class="title text-center mb-40">
+                  <div class="title text-center mb-20">
                     <span class="h3 mb-2">{{ __('Login') }}</span>
                     <button class="btn btn-sm btn-primary btn-gradient" id="guest_checkout"
-                      type="button">{{ __('Procced as guest checkout') }}
+                      type="button">{{ __('Proceed as guest checkout') }}
                     </button>
                   </div>
                   <div class="form-group mb-20">

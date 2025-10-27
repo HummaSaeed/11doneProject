@@ -4,6 +4,8 @@
 <link rel="stylesheet" href="{{ asset('assets/frontend/css/vendors/datatables.min.css') }}">
 <!-- Fontawesome Icon CSS -->
 <link rel="stylesheet" href="{{ asset('assets/frontend/fonts/fontawesome/css/all.min.css') }}">
+<!-- Booking Modal Responsive CSS -->
+<link rel="stylesheet" href="{{ asset('assets/frontend/css/booking-modal-responsive.css') }}">
 <!-- Icomoon Icon CSS -->
 <link rel="stylesheet" href="{{ asset('assets/frontend/fonts/icomoon/style.css') }}">
 <!-- Date-range Picker -->

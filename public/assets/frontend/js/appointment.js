@@ -464,8 +464,7 @@ function initializeGeneralCalendar(serviceId) {
           $('body').on('change', '#time_slot_select', function () {
             let serviceHourId = $(this).val();
             
-            console.log('Time slot selected:', serviceHourId);
-            console.log('Showing Next Step button...');
+      
 
             $('#time_next_step').removeClass('d-none');
             $('#max_person_id').removeClass('d-none');
