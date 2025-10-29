@@ -1,9 +1,20 @@
 "use strict";
 var bookingStepper;
+var currentServiceData = {}; // Store service information globally
 const csrfToken = $('meta[name="csrf-token"]').attr('content');
 $('body').on('click', '.bookNowBtn', function () {
   $('.request-loader-time').addClass('show');
   var service_id = $(this).data('id');
+  
+  // Capture service information from the card
+  var $serviceCard = $(this).closest('.product-default, .product-details');
+  currentServiceData = {
+    id: service_id,
+    name: $serviceCard.find('.product-title a, h6 a').text().trim() || 'Service',
+    price: $serviceCard.find('.new-price').text().trim() || 'N/A',
+    category: $serviceCard.find('.tag').text().trim() || ''
+  };
+  
   //service
   $.ajax({
     type: 'get',
@@ -15,11 +26,35 @@ $('body').on('click', '.bookNowBtn', function () {
       $('#makeBooking').modal('show');
       $('.request-loader-time').removeClass('show');
       $('#bookInfoShow').html(response);
+      
+      // Vendor ID and Service ID are now set in the form from PHP
+      // Store them in currentServiceData as well
+      currentServiceData.vendor_id = $('#vendor_id').val();
+      currentServiceData.service_id = $('#service_id').val();
+      
       //  Bootstrap Stepper
       bookingStepper = new Stepper(document.querySelector('#booking-stepper'), {
         linear: true,
         animation: true,
       });
+      
+      // Bind Review Booking button click event (now a text link)
+      $(document).off('click', '#payment_next_step').on('click', '#payment_next_step', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        proceedToSummary();
+        return false;
+      });
+      
+      // Bind Proceed to Payment button from summary page (now a text link)
+      $(document).off('click', '#summary_proceed_payment').on('click', '#summary_proceed_payment', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $('.request-loader-time').addClass('show');
+        $('#payment-form').submit();
+        return false;
+      });
+      
       // Initialize calendar directly for general availability
       var serviceId = service_id; // Use the service ID from the button click
       initializeGeneralCalendar(serviceId);
@@ -59,8 +94,13 @@ $('body').on('click', '.bookNowBtn', function () {
       $("#payment-form").submit(function (event) {
         event.preventDefault();
         $('.request-loader-time').addClass('show');
+        
+        var selectedGateway = $('#gateway').val();
+        console.log('Form submitted with gateway:', selectedGateway);
+        
         // Validate the form fields
-        if ($('#gateway').val() == 'stripe') {
+        if (selectedGateway == 'stripe') {
+          console.log('Processing Stripe payment');
           stripe.createToken(cardElement).then(function (result) {
             if (result.error) {
               // Display errors to the customer
@@ -72,14 +112,30 @@ $('body').on('click', '.bookNowBtn', function () {
               stripeTokenHandler(result.token);
             }
           });
-        } else if ($('#gateway').val() == 'authorize.net') {
+          return; // Don't proceed with AJAX for Stripe yet
+        } else if (selectedGateway == 'authorize.net') {
+          console.log('Processing Authorize.net payment');
           sendPaymentDataToAnet();
+          return; // Don't proceed with AJAX for Authorize.net yet
+        } else {
+          // For PayPal and other redirect-based gateways, proceed directly
+          console.log('Processing redirect-based gateway (PayPal, etc.)');
         }
 
         let form = document.getElementById('payment-form');
         let fd = new FormData(form);
         let url = $("#payment-form").attr('action');
         let method = $("#payment-form").attr('method');
+
+        // Debug: Log form data being sent
+        console.log('=== Payment Form Submission ===');
+        console.log('Gateway:', $('#gateway').val());
+        console.log('Vendor ID:', $('#vendor_id').val());
+        console.log('Service ID:', $('#service_id').val());
+        console.log('Service Hour ID:', $('#serviceHourId').val());
+        console.log('Booking Date:', $('#bookingDate').val());
+        console.log('Staff ID:', $('#staffId').val());
+        console.log('User ID:', $('#userId').val());
 
         // Submit the form via AJAX
         $.ajax({
@@ -89,8 +145,11 @@ $('body').on('click', '.bookNowBtn', function () {
           contentType: false,
           processData: false,
           success: function (data) {
+            console.log('Payment form submission successful', data);
             $('#featuredBtn').addClass('disabled');
+            $('#summary_proceed_payment').addClass('disabled');
             if (data.redirectURL) {
+              console.log('Redirecting to:', data.redirectURL);
               window.location.href = data.redirectURL;
             } else {
               $('#razorPayForm').html(data);
@@ -103,7 +162,12 @@ $('body').on('click', '.bookNowBtn', function () {
             $('.request-loader-time').removeClass('show');
           },
           error: function (error) {
+            console.error('=== Payment Error ===');
+            console.error('Status:', error.status);
+            console.error('Response:', error.responseJSON);
+            
             $('#featuredBtn').removeClass('disabled');
+            $('#summary_proceed_payment').removeClass('disabled');
             $('.em').each(function () {
               $(this).html('');
             });
@@ -113,8 +177,20 @@ $('body').on('click', '.bookNowBtn', function () {
               for (let field in error.responseJSON.errors) {
                 document.getElementById('err_' + field).innerHTML = error.responseJSON.errors[field][0];
               }
+            } else if (error.status === 500) {
+              // Server error
+              var errorMsg = 'Payment processing error. Please try again.';
+              if (error.responseJSON && error.responseJSON.message) {
+                errorMsg = error.responseJSON.message;
+              }
+              $('#err_gateway').text(errorMsg);
+              alert('Error: ' + errorMsg);
             } else {
-              $('#err_currency').text(error.responseJSON.error)
+              if (error.responseJSON && error.responseJSON.error) {
+                $('#err_currency').text(error.responseJSON.error);
+              } else {
+                $('#err_gateway').text('An error occurred. Please try again.');
+              }
             }
             $(event.target).prop('disabled', false);
             $('.request-loader-time').removeClass('show');
@@ -1203,5 +1279,116 @@ $(document).ready(function () {
   });
 
 });
+
+/*===================== Proceed to Summary with validation =================*/
+window.proceedToSummary = function() {
+  console.log('proceedToSummary called');
+  
+  // Validate gateway selection
+  var gateway = $('#gateway').val();
+  console.log('Selected gateway:', gateway);
+  
+  if (!gateway || gateway == '') {
+    $('#err_gateway').text('Please select a payment method').show();
+    console.error('No payment gateway selected');
+    return false;
+  }
+  $('#err_gateway').text('').hide();
+
+  // For Stripe and Authorize.net, validate that card details are ready
+  if (gateway === 'stripe' || gateway === 'authorize.net') {
+    console.log('Card-based gateway selected:', gateway);
+    // Card validation will happen during form submission
+  } else {
+    console.log('Redirect-based gateway selected (PayPal, etc.):', gateway);
+    // For PayPal and other redirect gateways, no card details needed
+  }
+  
+  try {
+    // Populate summary with all collected data
+    populateSummary();
+    console.log('Summary populated successfully');
+    
+    // Navigate to summary step
+    if (bookingStepper) {
+      bookingStepper.next();
+      console.log('Navigated to summary step');
+    } else {
+      console.error('Booking stepper not initialized');
+      alert('Error: Booking system not properly initialized. Please refresh and try again.');
+    }
+  } catch (error) {
+    console.error('Error in proceedToSummary:', error);
+    alert('An error occurred. Please try again.');
+  }
+  
+  return false; // Prevent any form submission
+}
+
+/*===================== Populate Summary Section =================*/
+function populateSummary() {
+  // Get service information from stored data
+  var serviceName = currentServiceData.name || 'Service';
+  var servicePrice = currentServiceData.price || 'N/A';
+  
+  // Get booking date and time
+  var bookingDate = $('#booking_date').val() || $('#bookingDate').val() || '-';
+  var selectedTimeSlot = $('#time_slot_select option:selected').text() || '-';
+  
+  // Format the date if it's in YYYY-MM-DD format
+  if (bookingDate && bookingDate != '-') {
+    var dateObj = new Date(bookingDate);
+    if (!isNaN(dateObj.getTime())) {
+      var options = { year: 'numeric', month: 'long', day: 'numeric' };
+      bookingDate = dateObj.toLocaleDateString('en-US', options);
+    }
+  }
+  
+  // Get customer information
+  var customerName = $('#name').val() || $('#billing_name').val() || '-';
+  var customerEmail = $('#email').val() || $('#billing_email').val() || '-';
+  var customerPhone = $('#phone').val() || $('#billing_phone').val() || '-';
+  var customerAddress = $('#address').val() || $('#billing_address').val() || '-';
+  var zipCode = $('#zip_code').val() || $('#billing_zip_code').val() || '';
+  var country = $('#country').val() || $('#billing_country').val() || '';
+  
+  // Combine address
+  var fullAddress = customerAddress;
+  if (zipCode) fullAddress += ', ' + zipCode;
+  if (country) fullAddress += ', ' + country;
+  
+  // Get staff information if available
+  var staffName = $('.staff_select.selected').find('.card-title a').text() || '';
+  if (staffName) {
+    $('#summary-staff-row').show();
+    $('#summary-staff-name').text(staffName);
+  } else {
+    $('#summary-staff-row').hide();
+  }
+  
+  // Get max persons if available
+  var maxPersons = $('#max_person').val() || $('#bmax_person').val() || '';
+  if (maxPersons) {
+    $('#summary-persons-row').show();
+    $('#summary-max-persons').text(maxPersons);
+  } else {
+    $('#summary-persons-row').hide();
+  }
+  
+  // Get payment method
+  var paymentMethod = $('#gateway option:selected').text() || '-';
+  
+  // Populate the summary fields
+  $('#summary-service-name').text(serviceName);
+  $('#summary-service-price').text(servicePrice);
+  $('#summary-booking-date').text(bookingDate);
+  $('#summary-booking-time').text(selectedTimeSlot);
+  $('#summary-customer-name').text(customerName);
+  $('#summary-customer-email').text(customerEmail);
+  $('#summary-customer-phone').text(customerPhone);
+  $('#summary-customer-address').text(fullAddress);
+  $('#summary-payment-method').text(paymentMethod);
+  $('#summary-total-amount').text(servicePrice);
+}
 
 

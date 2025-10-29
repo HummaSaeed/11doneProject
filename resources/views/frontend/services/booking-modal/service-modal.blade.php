@@ -24,13 +24,13 @@
         <span class="bs-stepper-label">{{ __('Payment') }}</span>
       </button>
     </div>
-    <!-- <div class="step" data-target="#summary">
-      <button type="button" class="step-trigger" role="tab" aria-controls="confirm" id="confirm-trigger">
+    <div class="step" data-target="#summary">
+      <button type="button" class="step-trigger" role="tab" aria-controls="summary" id="summary-trigger">
         <span class="h3 mb-1">04</span>
-        <span class="bs-stepper-circle"><i class="fal fa-check-circle"></i></span>
+        <span class="bs-stepper-circle"><i class="fal fa-list-alt"></i></span>
         <span class="bs-stepper-label">{{ __('Summary') }}</span>
       </button>
-    </div> -->
+    </div>
     <div class="step" data-target="#confirm">
       <button type="button" class="step-trigger" role="tab" aria-controls="confirm" id="confirm-trigger">
         <span class="h3 mb-1">05</span>
@@ -56,8 +56,8 @@
             </div>
           </div>
 
-          <div class="btn-groups justify-content-center w-100 ">
-            <a id="time_next_step" href="javaScript:void(0)" class="d-none btn-text color-primary icon-start"
+          <div class="btn-groups justify-content-center w-100" style="margin-top: 5px !important;">
+            <a id="time_next_step" href="javaScript:void(0)" class="d-none btn-text color-primary icon-end"
               onclick="bookingStepper.next()" target="_self">{{ __('Next Step') }}<i
                 class="fal fa-long-arrow-right"></i></a>
           </div>
@@ -119,52 +119,52 @@
           </div>
           <form id="billing-form" class="{{ !Auth::guard('web')->user() ? 'd-none' : 'd-block' }}"
             action="{{ route('frontend.services.billing') }}" method="get">
-            <div class="section-title title-center mb-30 mt-4">
-              <h3 class="title col-lg-8">{{ __('Billing Details') }}</h3>
+            <div class="section-title title-center mb-2 mt-2">
+              <h3 class="title col-lg-8" style="font-size: 14px; margin-bottom: 5px;">{{ __('Billing Details') }}</h3>
             </div>
             <div class="row">
 
               <div class="col-lg-6">
-                <div class="form-group mb-30">
+                <div class="form-group mb-2">
                   <label for="name">{{ __('Name') . '*' }}</label>
                   <input id="name" type="text" class="form-control" name="name"
                     placeholder="{{ __('Enter Full Name') }}" value="{{ $authUser ? $authUser->name : '' }}">
-                  <span id="err_name" class="mt-2 mb-0 text-danger em"></span>
+                  <span id="err_name" class="mt-1 mb-0 text-danger em" style="font-size: 10px;"></span>
                 </div>
               </div>
               <div class="col-lg-6">
-                <div class="form-group mb-30">
+                <div class="form-group mb-2">
                   <label for="phone">{{ __('Phone Number') . '*' }}</label>
                   <input id="phone" type="text" class="form-control" name="phone"
                     placeholder="{{ __('Phone Number') }}" value="{{ $authUser ? $authUser->phone : '' }}">
-                  <span id="err_phone" class="mt-2 mb-0 text-danger em"></span>
+                  <span id="err_phone" class="mt-1 mb-0 text-danger em" style="font-size: 10px;"></span>
                 </div>
               </div>
               <div class="col-lg-12">
-                <div class="form-group mb-30">
+                <div class="form-group mb-2">
                   <label for="email">{{ __('Email Address') }}*</label>
                   <input id="email" type="email" class="form-control" name="email"
                     placeholder="{{ __('Email Address') }}" value="{{ $authUser ? $authUser->email : '' }}">
-                  <span id="err_email" class="mt-2 mb-0 text-danger em"></span>
+                  <span id="err_email" class="mt-1 mb-0 text-danger em" style="font-size: 10px;"></span>
                 </div>
               </div>
               <div class="col-lg-12">
-                <div class="form-group mb-30">
+                <div class="form-group mb-2">
                   <label for="address">{{ __('Address') }}*</label>
                   <input id="address" type="text" name="address" class="form-control"
                     placeholder="{{ __('Address') }}" value="{{ $authUser ? $authUser->address : '' }}">
-                  <span id="err_address" class="mt-2 mb-0 text-danger em"></span>
+                  <span id="err_address" class="mt-1 mb-0 text-danger em" style="font-size: 10px;"></span>
                 </div>
               </div>
               <div class="col-lg-6">
-                <div class="form-group mb-30">
+                <div class="form-group mb-2">
                   <label for="address">{{ __('Postcode/Zip') }}</label>
                   <input id="zip_code" type="text" name="zip_code" class="form-control"
                     placeholder="{{ __('Postcode/Zip') }}" value="{{ $authUser ? $authUser->zip_code : '' }}">
                 </div>
               </div>
               <div class="col-lg-6">
-                <div class="form-group mb-30">
+                <div class="form-group mb-2">
                   <label for="">{{ __('Country') }}</label>
                   <input id="country" type="text" class="form-control" name="country"
                     placeholder="{{ __('Country') }}" value="{{ $authUser ? $authUser->country : '' }}">
@@ -177,7 +177,7 @@
             <input hidden name="service_hour_id" id="service_hour_id">
             <input hidden name="max_person" id="max_person">
             <div class="d-flex  justify-content-center">
-              <div class="btn-groups mt-30">
+              <div class="btn-groups mt-2">
                 @if (Auth::guard('web')->user())
                   <a href="javaScript:void(0)" class="btn-text color-primary icon-start"
                     onclick="bookingStepper.previous()" target="_self">
@@ -198,9 +198,9 @@
       </div>
 
       <div id="payment" class="bs-stepper-pane fade" role="tabpanel" aria-labelledby="payment-trigger">
-        <div class="payment-area pt-4">
-          <div class="section-title title-center mb-40">
-            <h3 class="title col-lg-8">{{ __('Payment Method') }}</h3>
+        <div class="payment-area pt-2">
+          <div class="section-title title-center mb-2">
+            <h3 class="title col-lg-8" style="font-size: 14px; margin-bottom: 5px;">{{ __('Payment Method') }}</h3>
           </div>
           <div class="payment-form w-50 w-sm-100 mx-auto">
             <form action="{{ route('frontend.service.payment') }}" method="POST" id="payment-form"
@@ -218,12 +218,36 @@
               <input hidden type="text" name="staffId" id="staffId">
               <input hidden type="text" name="user_id" id="userId">
               <input hidden type="text" name="max_person" id="bmax_person">
+              <input hidden type="text" name="vendor_id" id="vendor_id" value="{{ $vendor_id ?? 0 }}">
+              <input hidden type="text" name="service_id" id="service_id" value="{{ $service_id ?? '' }}">
               <div class="form-group">
                 <select name="gateway" id="gateway" class="form-control form-select niceselect">
-                  <!--option selected disabled>{{ __('Choose a Payment Method') }}</option-->
+                  <option selected disabled>{{ __('Choose a Payment Method') }}</option>
                   @foreach ($online_gateways as $getway)
                     <option @selected(old('gateway') == $getway->keyword) value="{{ $getway->keyword }}">
-                      {{ 'Pay with a Credit or Debit Card' }}
+                      @if ($getway->keyword == 'paypal')
+                        {{ __('PayPal') }}
+                      @elseif ($getway->keyword == 'stripe')
+                        {{ __('Credit or Debit Card (Stripe)') }}
+                      @elseif ($getway->keyword == 'authorize.net')
+                        {{ __('Credit or Debit Card (Authorize.net)') }}
+                      @elseif ($getway->keyword == 'razorpay')
+                        {{ __('Razorpay') }}
+                      @elseif ($getway->keyword == 'mollie')
+                        {{ __('Mollie') }}
+                      @elseif ($getway->keyword == 'flutterwave')
+                        {{ __('Flutterwave') }}
+                      @elseif ($getway->keyword == 'instamojo')
+                        {{ __('Instamojo') }}
+                      @elseif ($getway->keyword == 'paystack')
+                        {{ __('Paystack') }}
+                      @elseif ($getway->keyword == 'paytm')
+                        {{ __('Paytm') }}
+                      @elseif ($getway->keyword == 'mercadopago')
+                        {{ __('Mercado Pago') }}
+                      @else
+                        {{ __(ucfirst($getway->keyword)) }}
+                      @endif
                     </option>
                   @endforeach
                   @if (count($offline_gateways) > 0)
@@ -306,16 +330,101 @@
                 </div>
                 <span id="err_currency" class="mt-2 mb-0 text-danger em"></span>
               @endforeach
-              <div class="mt-2">
-                <button id="featuredBtn"
-                  class="btn btn-lg btn-primary btn-gradient w-100">{{ __('Make Payment') }}</button>
-              </div>
             </form>
           </div>
-          <div class="btn-groups justify-content-center w-100 mt-20">
+          <div class="btn-groups justify-content-center w-100 mt-2">
             <a href="javaScript:void(0)" id="payment_prev" class="btn-text color-primary icon-start"
               onclick="bookingStepper.previous()" target="_self"><i
                 class="fal fa-long-arrow-left"></i>{{ __('Prev Step') }}</a>
+            <a href="javaScript:void(0)" id="payment_next_step" class="btn-text color-primary icon-end"
+              target="_self">{{ __('Review Booking') }}<i class="fal fa-long-arrow-right"></i></a>
+          </div>
+        </div>
+      </div>
+
+      <div id="summary" class="bs-stepper-pane fade" role="tabpanel" aria-labelledby="summary-trigger">
+        <div class="summary-area pt-2">
+          <div class="section-title title-center mb-2">
+            <h3 class="title col-lg-8" style="font-size: 14px; margin-bottom: 3px;">{{ __('Booking Summary') }}</h3>
+            <p class="text-muted" style="font-size: 10px; margin-bottom: 5px;">{{ __('Review details before payment') }}</p>
+          </div>
+          
+          <div class="booking-summary-container">
+            <!-- Service Details Card -->
+            <div class="summary-card">
+              <h5 class="summary-card-header">{{ __('Service Details') }}</h5>
+              <div class="summary-row">
+                <span class="summary-label">{{ __('Service Name') }}:</span>
+                <span class="summary-value" id="summary-service-name">-</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">{{ __('Service Price') }}:</span>
+                <span class="summary-value" id="summary-service-price">-</span>
+              </div>
+            </div>
+
+            <!-- Booking Information Card -->
+            <div class="summary-card">
+              <h5 class="summary-card-header">{{ __('Booking Information') }}</h5>
+              <div class="summary-row">
+                <span class="summary-label">{{ __('Date') }}:</span>
+                <span class="summary-value" id="summary-booking-date">-</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">{{ __('Time') }}:</span>
+                <span class="summary-value" id="summary-booking-time">-</span>
+              </div>
+              <div class="summary-row" id="summary-staff-row" style="display: none;">
+                <span class="summary-label">{{ __('Staff Member') }}:</span>
+                <span class="summary-value" id="summary-staff-name">-</span>
+              </div>
+              <div class="summary-row" id="summary-persons-row" style="display: none;">
+                <span class="summary-label">{{ __('Number of Persons') }}:</span>
+                <span class="summary-value" id="summary-max-persons">-</span>
+              </div>
+            </div>
+
+            <!-- Customer Information Card -->
+            <div class="summary-card">
+              <h5 class="summary-card-header">{{ __('Customer Information') }}</h5>
+              <div class="summary-row">
+                <span class="summary-label">{{ __('Name') }}:</span>
+                <span class="summary-value" id="summary-customer-name">-</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">{{ __('Email') }}:</span>
+                <span class="summary-value" id="summary-customer-email">-</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">{{ __('Phone') }}:</span>
+                <span class="summary-value" id="summary-customer-phone">-</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">{{ __('Address') }}:</span>
+                <span class="summary-value" id="summary-customer-address">-</span>
+              </div>
+            </div>
+
+            <!-- Payment Information Card -->
+            <div class="summary-card">
+              <h5 class="summary-card-header">{{ __('Payment Information') }}</h5>
+              <div class="summary-row">
+                <span class="summary-label">{{ __('Payment Method') }}:</span>
+                <span class="summary-value" id="summary-payment-method">-</span>
+              </div>
+              <div class="summary-row summary-total">
+                <span class="summary-label">{{ __('Total Amount') }}:</span>
+                <span class="summary-value" id="summary-total-amount">-</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="btn-groups justify-content-center w-100 mt-20">
+            <a href="javaScript:void(0)" class="btn-text color-primary icon-start"
+              onclick="bookingStepper.previous()" target="_self">
+              <i class="fal fa-long-arrow-left"></i>{{ __('Prev Step') }}</a>
+            <a href="javaScript:void(0)" id="summary_proceed_payment" class="btn-text color-primary icon-end"
+              target="_self">{{ __('Proceed to Payment') }}<i class="fal fa-long-arrow-right"></i></a>
           </div>
         </div>
       </div>

@@ -599,6 +599,10 @@ if ($request->filled('location')) {
       // Get payment gateways
       $information['online_gateways'] = OnlineGateway::where('status', 1)->get();
       $information['offline_gateways'] = OfflineGateway::where('status', 1)->orderBy('serial_number', 'desc')->get();
+      
+      // Pass service and vendor IDs to the view for payment form
+      $information['service_id'] = $service->id;
+      $information['vendor_id'] = $service->vendor_id;
 
       return view('frontend.services.booking-modal.service-modal', $information);
       
